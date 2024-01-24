@@ -46,7 +46,7 @@ def downloadFileFromS3(bucket_name,file_key,outfile=None, s3=None):
     s3.Bucket(bucket_name).download_file(file_key, outfile)
     return outfile
 
-def getFileLocal(filedict):
+def getCMRFile(filedict):
     """    
     Args:
         s (dict): {
