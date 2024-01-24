@@ -3,7 +3,7 @@ import os
 import requests
 import boto3
 from pynico_eros_montin import pynico as pn
-
+import shutil
 def s3FileTolocal(J, s3=None, pt="/tmp"):
     key = J["key"]
     bucket = J["bucket"]
@@ -70,4 +70,177 @@ def getCMRFile(filedict):
         return T
     else:
         raise Exception("I can't get this file modality")
+
+import pyable_eros_montin.imaginable as ima      
+import numpy as np
+
+class cmrOutput:
+    def __init__(self,app=None,filename=None,path=None):
+            self.out={"headers":{"options":{}},"data":[]}
+            if filename!=None:
+                self.outputfilename=pn.Pathable(filename)
+            else:
+                self.outputfilename=pn.createRandomTemporaryPathableFromFileName("a.zip")
+            
+            self.outputfilename.ensureDirectoryExistence()
+            if path==None:
+                self.outputpath=pn.createRandomTemporaryPathableFromFileName(self.outputfilename.getPosition()).appendPathRandom()
+            else:
+                self.outputpath=pn.Pathable(path)
+            self.outputpath.ensureDirectoryExistence()
+            self.outputfilename.ensureDirectoryExistence()
+            self.setApp(app)
+            self.forkable=self.outputpath.fork()
+            self.forkable.addBaseName("data")          
+
+    
+    def addAbleFromFilename(self,filename,id,name,type="output"):
+        L=ima.Imaginable(filename=filename)
+        N=pn.Pathable(filename)
+        o=self.addAble(L,id,name,type,N.getBaseName())
+        o["filename"]=filename
+        return o
+        
+    def addAble(self,L,id,name,type="output",basename=None):
+        pixeltype='real'
+        im=L.getImageAsNumpy()
+
+        if np.iscomplexobj(im):
+            pixeltype='complex'
+            L.setImageFromNumpy(im.astype(np.singlecomplex))
+        if basename==None:
+            basename=pn.createRandomTemporaryPathableFromFileName("a.nii.gz").getBaseName()
+        o={'filename':None,
+           'basename':basename,
+           'able':L,
+                'id':id,
+                'dim':L.getImageDimension(),
+                'name':name,
+                'type':type,
+                'numpyPixelType':im.dtype.name,
+                'pixelType':pixeltype}
+        
+        self.out["data"].append(o)
+        return o
+    
+    def setHeader(self,a={}):
+        for k in a.keys():
+            self.out["headers"][k]=a[k]
+    def setPipeline(self,a):
+        if "options" not in self.out["headers"].keys():
+            self.out["headers"]["options"]={}
+        self.out["headers"]["options"]["pipeline"]=a
+
+    def setToken(self,a):
+        if "options" not in self.out["headers"].keys():
+            self.out["headers"]["options"]={}
+        self.out["headers"]["options"]["token"]=a
+    def setLog(self,a):
+        l=self.forkable.fork()
+        l.changeBaseName("log.json")
+        a.writeLogAs(l.getPosition())
+        self.out["log"]=a.getLog()
+
+    def setApp(self,a):
+        self.out["app"]=a
+    def setTask(self,a):
+        l=self.forkable.fork()
+        l.changeBaseName("task.json")
+        l.writeJson(a)
+
+    
+    def setOptions(self,a):
+        for k in a.keys():
+            self.out["headers"]["options"][k]=a[k]
+        l=self.forkable.fork()
+        l.changeBaseName("options.json")
+        l.writeJson(a)
+
+    def setEvent(self,a):
+        l=self.forkable.fork()
+        l.changeBaseName("event.json")
+        l.writeJson(a)
+
+    def exportResults(self):
+        outputdirectory=self.outputpath.getPath()
+        #check id the data are in the expected directory
+        for d in self.out["data"]:
+            theo= outputdirectory+"/data/"+d["basename"]
+            if d["filename"]==None:
+                d["able"].writeImageAs(theo)
+            
+            elif d["filename"]!=theo:
+                shutil.copy(d["filename"],theo)
+            d["filename"]="data/"+d["basename"]
+            if "able" in d.keys():
+                del d["able"]
+            if "basename" in d.keys():
+                del d["basename"]
+
+        #write the json file
+        OUT=self.forkable.fork()
+        OUT.changeBaseName("info.json")
+        OUT.writeJson(self.out)
+
+    def changeOutputPath(self,path):
+        #copy the data to the new path
+        shutil.copytree(self.outputpath.getPosition(),path)
+        shutil.rmtree(self.outputpath.getPosition())          
+        self.outputpath=pn.Pathable(path)
+        self.outputpath.ensureDirectoryExistence()
+        self.forkable=self.outputpath.fork()
+        self.forkable.addBaseName("data.nii.gz")
+        
+        return self.outputpath.getPosition()
+
+    def exportAndZipResults(self,outzipfile=None,delete=False):
+        p=self.exportResults()
+        if outzipfile==None:
+            outzipfile=self.outputfilename.getPosition()
+
+        shutil.make_archive(outzipfile[:-4],outzipfile[-3:] , self.outputpath.getPosition())
+        if delete:
+            shutil.rmtree(self.outputpath.getPosition())
+        return outzipfile
+    
+    
+
+if __name__ == "__main__":
+    a=ima.Imaginable()
+    b=ima.Imaginable()
+    a.setImageFromNumpy(np.random.random((10,10,10)))
+    b.setImageFromNumpy(np.random.random((10,10,10)))
+    R=cmrOutput("TESS","/g/zzz.zip",'/g/aaa/')
+    
+    R.addAble(a,1,"test",basename="test.nii.gz")
+    R.addAble(a,1,"test2",basename="test2.nii.gz")
+    R.setApp("TESS")
+    R.setToken("dede")
+    R.setPipeline("dedde")
+    L=pn.Log()
+    L.append("test")
+    L.append("test2")
+    R.setLog(L)
+    R.changeOutputPath("/g/bbb/")
+    R.setTask({"id":1,
+    "name":"test"})
+    R.setOptions({"id":1,'ded':'rrr'})
+
+    R.changeOutputPath("/g/aaea/")
+    R.setEvent({"id":1})
+    # R.exportAndZipResults(outzipfile='/g/zzz.zip',delete=False)
+    R.exportAndZipResults(delete=False)
+
+
+
+    
+
+
+    
+    
+                
+
+    
+
+            
 
