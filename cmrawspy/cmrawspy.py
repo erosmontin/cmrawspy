@@ -2,6 +2,15 @@ import uuid
 import boto3
 from pynico_eros_montin import pynico as pn
 import shutil
+
+import scipy
+
+def saveMatlab(fn,vars):
+    J=dict()
+    for k in vars:
+        J[k["name"].replace(" ","")]=k["data"]
+    scipy.io.savemat(fn,J)
+
 def s3FileTolocal(J, s3=None, pt="/tmp"):
     key = J["key"]
     bucket = J["bucket"]
@@ -99,7 +108,8 @@ class cmrOutput:
             self.outputfilename.ensureDirectoryExistence()
             self.setApp(app)
             self.forkable=self.outputpath.fork()
-            self.forkable.addBaseName("data")          
+            self.forkable.addBaseName("data")
+            self.savematlab=True          
 
     
     def addAbleFromFilename(self,filename,id,name,type="output"):
@@ -172,6 +182,7 @@ class cmrOutput:
     def exportResults(self):
         outputdirectory=self.outputpath.getPath()
         #check id the data are in the expected directory
+        J=[]
         for d in self.out["data"]:
             theo= outputdirectory+"/data/"+d["basename"]
             pn.Pathable(theo).ensureDirectoryExistence()
@@ -182,6 +193,9 @@ class cmrOutput:
             elif d["filename"]!=theo:
                 shutil.copy(d["filename"],theo)
             d["filename"]="data/"+d["basename"]
+            
+            if self.savematlab:
+                J.append({"name":d["name"],"data":d["able"].getImageAsNumpy()})
             if "able" in d.keys():
                 del d["able"]
             if "basename" in d.keys():
@@ -191,6 +205,8 @@ class cmrOutput:
         OUT=self.forkable.fork()
         OUT.changeBaseName("info.json")
         OUT.writeJson(self.out)
+        OUT.changeBaseName("matlab.mat")
+        saveMatlab(OUT.getPosition(),J)
 
     def changeOutputPath(self,path):
         #copy the data to the new path
