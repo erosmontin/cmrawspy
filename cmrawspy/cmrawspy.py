@@ -174,6 +174,8 @@ class cmrOutput:
         #check id the data are in the expected directory
         for d in self.out["data"]:
             theo= outputdirectory+"/data/"+d["basename"]
+            pn.Pathable(theo).ensureDirectoryExistence()
+
             if d["filename"]==None:
                 d["able"].writeImageAs(theo)
             
@@ -229,6 +231,7 @@ if __name__ == "__main__":
     
     R.addAble(a,1,"test",basename="test.nii.gz")
     R.addAble(a,1,"test2",basename="test2.nii.gz")
+    R.addAbleFromFilename("/g/SAR2.nii.gz",3,"test3")
     R.setApp("TESS")
     R.setToken("dede")
     R.setPipeline("dedde")
@@ -241,10 +244,10 @@ if __name__ == "__main__":
     "name":"test"})
     R.setOptions({"id":1,'ded':'rrr'})
 
-    R.changeOutputPath("/g/aaea/")
+    R.changeOutputPath("/g/aa2ea/")
     R.setEvent({"id":1})
     # R.exportAndZipResults(outzipfile='/g/zzz.zip',delete=False)
-    R.exportAndZipResults(delete=False)
+    R.exportAndZipResults(delete=True)
 
 
 
