@@ -1,6 +1,4 @@
-import json
-import os
-import requests
+import uuid
 import boto3
 from pynico_eros_montin import pynico as pn
 import shutil
@@ -45,6 +43,16 @@ def downloadFileFromS3(bucket_name,file_key,outfile=None, s3=None):
         out_file = pn.createRandomTemporaryPathableFromFileName("a.json")
     s3.Bucket(bucket_name).download_file(file_key, outfile)
     return outfile
+
+def uploadFiletoS3(filename,bucket_name,file_key=None, s3=None):
+    if s3 == None:
+        s3 = boto3.resource("s3")
+    if file_key == None:
+        file_key = str(uuid.uuid4())
+    s3.Bucket(bucket_name).upload_file(filename, file_key)
+    return {"bucket": bucket_name, "key": file_key}
+
+
 
 def getCMRFile(filedict):
     """    
@@ -203,7 +211,14 @@ class cmrOutput:
             shutil.rmtree(self.outputpath.getPosition())
         return outzipfile
     
+    def exportAndZipResultsToS3(self,bucket,key=None,outzipfile=None,delete=False,deletezip=False):
+        p=self.exportAndZipResults(outzipfile=outzipfile,delete=delete)
+        O= uploadFiletoS3(p,bucket,key)
+        if deletezip:
+            shutil.rmtree(p)
+        return O
     
+
 
 if __name__ == "__main__":
     a=ima.Imaginable()
