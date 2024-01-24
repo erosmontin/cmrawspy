@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+include = ["**/*.py"]
+
+[project]
+name = "cmrawspy"
+version = "0.0.2"
+authors = [
+  { name="Dr. Eros Montin, PhD", email="eros.montin@gmail.com" },
+]
+description = "Handy things you need for aws when running your code"
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = ["requests", "boto3", "pynico_eros_montin @ git+https://github.com/erosmontin/pynico.git"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/erosmontin/cmrawspy"
+"Bug Tracker" = "https://github.com/erosmontin/cmrawspy/issues"
