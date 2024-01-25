@@ -249,6 +249,7 @@ class cmrOutput:
     
     def exportAndZipResultsToS3(self,bucket,key=None,outzipfile=None,delete=False,deletezip=False,s3=None):
         p=self.exportAndZipResults(outzipfile=outzipfile,delete=delete)
+        print(f"file {p} will be upladed to {bucket}/{key}")
         O= uploadFiletoS3(p,bucket,key,s3=s3)
         if deletezip:
             shutil.rmtree(p)
