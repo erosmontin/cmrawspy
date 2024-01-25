@@ -1,26 +1,54 @@
-# pyable
-My collection of image and mesh functions
+# cmaraws
+My package for managing aws from [cmr]("https://cloudmrhub.com")
 
-1. imaginable
-1. meshable
+# Installation
+```
+pip install git+https://github.com/erosmontin/cmrawspy
 
-# Classes
-    - Imaginable:
-        image data 
-    - Roiable:
-        Mask with balue 1
-    - LAbelmappable:
-        Roi with multiple values (DEV)
-# versions:
-- 0.0.3 current version
-- 0.0.4 pre release
-    - updated the concept of change and set
-    - dflt interpolation and deflt usenearest..
-    - divide and multiply are casted to float and then cast back to their original pixeltype
-    - getWavelets
-    - left and right functions for HF (tested with Rview)
-    - WIP rigid_transform_3D resampleoncanonicalDirections() using [this git repo](https://github.com/nghiaho12/rigid_transform_3D/blob/master/test_rigid_transform_3D.py)
+```
+
+# usage
+```
+    from cmrawspy import cmrawspy as cm
+
+    a=ima.Imaginable()
+    b=ima.Imaginable()
+    a.setImageFromNumpy(np.random.random((10,10,10)))
+    b.setImageFromNumpy(np.random.random((10,10,10)))
+
+
+
+    R=cmrOutput("TESS","/g/zzz.zip",'/g/aaa/')
+    # Create a session
+    # read aws credentials from a file
+    AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN = getAwsCredentials('/home/eros/.aws/credentials')
+
+    s3=getS3Resource(AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN)
     
-[*Dr. Eros Montin, PhD*](http://me.biodimensional.com)
+
+    R.addAble(a,1,"test",basename="test.nii.gz")
+    R.addAble(a,1,"test2",basename="test2.nii.gz")
+    R.addAbleFromFilename("/g/SAR2.nii.gz",3,"test3")
+    R.setApp("TESS")
+    R.setToken("dede")
+    R.setPipeline("dedde")
+    L=pn.Log()
+    L.append("test")
+    L.append("test2")
+    R.setLog(L)
+    R.changeOutputPath("/g/bbb/")
+    R.setTask({"id":1,
+    "name":"test"})
+    R.setOptions({"id":1,'ded':'rrr'})
+
+    R.changeOutputPath("/g/aa2ea/")
+    R.setEvent({"id":1})
+    # R.exportAndZipResults(outzipfile='/g/zzz.zip',delete=False)
+    # R.exportAndZipResults(delete=True)
+    R.exportAndZipResultsToS3(delete=True,s3=s3,bucket="mytestcmr")
+
+```
+
+[*Dr. Eros Montin, PhD*](https://me.biodimensional.com)
 **46&2 just ahead of me!**
 
