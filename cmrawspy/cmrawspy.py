@@ -242,6 +242,7 @@ class cmrOutput:
         p=self.exportResults()
         if outzipfile==None:
             outzipfile=self.outputfilename.getPosition()
+        print(f"{ self.outputpath.getPosition()} - p -{outzipfile}")
         shutil.make_archive(outzipfile[:-4],outzipfile[-3:] , self.outputpath.getPosition())
         if delete:
             shutil.rmtree(self.outputpath.getPosition())
