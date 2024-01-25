@@ -20,7 +20,10 @@ def getS3Resource(aws_access_key_id, aws_secret_access_key,aws_session_token):
                              aws_secret_access_key=aws_secret_access_key,
                              aws_session_token=aws_session_token)
 
-    
+def getS3ResourceFromCredentials(credentialsfn='~/.aws/credentials'):
+    AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN = getAwsCredentials(credentialsfn)
+    return getS3Resource(AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN)
+
 def saveMatlab(fn,vars):
     J=dict()
     for k in vars:
@@ -64,8 +67,8 @@ def downloadFileFromS3(bucket_name,file_key,outfile=None, s3=None):
     """
     if s3 == None:
         s3 = boto3.resource("s3")
-    if out_file == None:
-        out_file = pn.createRandomTemporaryPathableFromFileName("a.json")
+    if outfile == None:
+        outfile = pn.createRandomTemporaryPathableFromFileName("a.json")
     s3.Bucket(bucket_name).download_file(file_key, outfile)
     return outfile
 
@@ -79,7 +82,7 @@ def uploadFiletoS3(filename,bucket_name,file_key=None, s3=None):
 
 
 
-def getCMRFile(filedict):
+def getCMRFile(filedict,s3=None):
     """    
     Args:
         s (dict): {
@@ -98,8 +101,8 @@ def getCMRFile(filedict):
     if (s["type"].lower()=='local'):
         return s["filename"]
     elif (s["type"].lower()=='s3'):
-        T=pn.createRandomTemporaryPathableFromFileName(s["filename"])
-        T=downloadFileFromS3(s["bucket"],s["key"],T)
+        T=pn.createRandomTemporaryPathableFromFileName(s["filename"]).getPosition()
+        T=downloadFileFromS3(s["bucket"],s["key"],T,s3=s3)
         return T
     else:
         raise Exception("I can't get this file modality")
@@ -254,41 +257,61 @@ class cmrOutput:
 
 
 if __name__ == "__main__":
-    a=ima.Imaginable()
-    b=ima.Imaginable()
-    a.setImageFromNumpy(np.random.random((10,10,10)))
-    b.setImageFromNumpy(np.random.random((10,10,10)))
+
+#dowbload file
+        J=pn.Pathable("data/s3job.json").readJson() 
+
+        T=J["task"]
+        
+        OPT=T["options"]
+        
+        MATLAB=J["output"]["matlab"]
+        s3=getS3ResourceFromCredentials('/home/eros/.aws/credentials')
+        md=getCMRFile(OPT["materialDensity"],s3=s3)
+        print(md)
+
+## bucket and key
+    # event=pn.readJson("data/event.json")
+    # job_bucket, job_file_key = getBucketAndKeyIdFromUplaodEvent(event)
+    # print(job_bucket, job_file_key)
+
+
+#OUPUT
+    # a=ima.Imaginable()
+    # b=ima.Imaginable()
+    # a.setImageFromNumpy(np.random.random((10,10,10)))
+    # b.setImageFromNumpy(np.random.random((10,10,10)))
 
 
 
-    R=cmrOutput("TESS","/g/zzz.zip",'/g/aaa/')
-    # Create a session
-    # read aws credentials from a file
-    AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN = getAwsCredentials('/home/eros/.aws/credentials')
+    # R=cmrOutput("TESS","/g/zzz.zip",'/g/aaa/')
+    # # Create a session
+    # # read aws credentials from a file
+    # AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN = getAwsCredentials('/home/eros/.aws/credentials')
 
-    s3=getS3Resource(AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN)
+    # s3=getS3Resource(AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN)
     
 
-    R.addAble(a,1,"test",basename="test.nii.gz")
-    R.addAble(a,1,"test2",basename="test2.nii.gz")
-    R.addAbleFromFilename("/g/SAR2.nii.gz",3,"test3")
-    R.setApp("TESS")
-    R.setToken("dede")
-    R.setPipeline("dedde")
-    L=pn.Log()
-    L.append("test")
-    L.append("test2")
-    R.setLog(L)
-    R.changeOutputPath("/g/bbb/")
-    R.setTask({"id":1,
-    "name":"test"})
-    R.setOptions({"id":1,'ded':'rrr'})
+    # R.addAble(a,1,"test",basename="test.nii.gz")
+    # R.addAble(a,1,"test2",basename="test2.nii.gz")
+    # R.addAbleFromFilename("/g/SAR2.nii.gz",3,"test3")
+    # R.setApp("TESS")
+    # R.setToken("dede")
+    # R.setPipeline("dedde")
+    # L=pn.Log()
+    # L.append("test")
+    # L.append("test2")
+    # R.setLog(L)
+    # R.changeOutputPath("/g/bbb/")
+    # R.setTask({"id":1,
+    # "name":"test"})
+    # R.setOptions({"id":1,'ded':'rrr'})
 
-    R.changeOutputPath("/g/aa2ea/")
-    R.setEvent({"id":1})
-    # R.exportAndZipResults(outzipfile='/g/zzz.zip',delete=False)
-    # R.exportAndZipResults(delete=True)
-    R.exportAndZipResultsToS3(delete=True,s3=s3,bucket="mytestcmr")
+    # R.changeOutputPath("/g/aa2ea/")
+    # R.setEvent({"id":1})
+    # # R.exportAndZipResults(outzipfile='/g/zzz.zip',delete=False)
+    # # R.exportAndZipResults(delete=True)
+    # R.exportAndZipResultsToS3(delete=True,s3=s3,bucket="mytestcmr")
 
 
 
