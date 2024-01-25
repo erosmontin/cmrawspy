@@ -218,8 +218,8 @@ class cmrOutput:
                 J.append({"name":d["name"],"data":d["able"].getImageAsNumpy()})
             if "able" in d.keys():
                 del d["able"]
-            if "basename" in d.keys():
-                del d["basename"]
+            # if "basename" in d.keys():
+            #     del d["basename"]
 
         #write the json file
         OUT=self.forkable.fork()
