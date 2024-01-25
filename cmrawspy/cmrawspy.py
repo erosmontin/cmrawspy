@@ -5,6 +5,22 @@ import shutil
 
 import scipy
 
+def getAwsCredentials(credentialsfn='~/.aws/credentials'):
+    with open(credentialsfn) as f:
+        lines = f.readlines()
+    AWS_ACCESS_KEY = lines[1].strip()[len('aws_access_key_id')+1:]
+    AWS_SECRET_KEY = lines[2].strip()[len('aws_secret_access_key')+1:]
+    AWS_SESSION_TOKEN = lines[3].strip()[len('aws_session_token')+1:]   
+    # aws_session_token = lines[3].strip()
+    return AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN
+
+def getS3Resource(aws_access_key_id, aws_secret_access_key,aws_session_token):
+    return boto3.resource('s3',
+                             aws_access_key_id=aws_access_key_id,
+                             aws_secret_access_key=aws_secret_access_key,
+                             aws_session_token=aws_session_token)
+
+    
 def saveMatlab(fn,vars):
     J=dict()
     for k in vars:
@@ -57,7 +73,7 @@ def uploadFiletoS3(filename,bucket_name,file_key=None, s3=None):
     if s3 == None:
         s3 = boto3.resource("s3")
     if file_key == None:
-        file_key = str(uuid.uuid4())
+        file_key = pn.Pathable(filename).addSuffix(f'-{str(uuid.uuid1())}').getBaseName()  
     s3.Bucket(bucket_name).upload_file(filename, file_key)
     return {"bucket": bucket_name, "key": file_key}
 
@@ -92,7 +108,7 @@ import pyable_eros_montin.imaginable as ima
 import numpy as np
 
 class cmrOutput:
-    def __init__(self,app=None,filename=None,path=None):
+    def __init__(self,app=None,filename=None,path=None,s3=None):
             self.out={"headers":{"options":{}},"data":[]}
             if filename!=None:
                 self.outputfilename=pn.Pathable(filename)
@@ -223,15 +239,14 @@ class cmrOutput:
         p=self.exportResults()
         if outzipfile==None:
             outzipfile=self.outputfilename.getPosition()
-
         shutil.make_archive(outzipfile[:-4],outzipfile[-3:] , self.outputpath.getPosition())
         if delete:
             shutil.rmtree(self.outputpath.getPosition())
         return outzipfile
     
-    def exportAndZipResultsToS3(self,bucket,key=None,outzipfile=None,delete=False,deletezip=False):
+    def exportAndZipResultsToS3(self,bucket,key=None,outzipfile=None,delete=False,deletezip=False,s3=None):
         p=self.exportAndZipResults(outzipfile=outzipfile,delete=delete)
-        O= uploadFiletoS3(p,bucket,key)
+        O= uploadFiletoS3(p,bucket,key,s3=s3)
         if deletezip:
             shutil.rmtree(p)
         return O
@@ -243,8 +258,17 @@ if __name__ == "__main__":
     b=ima.Imaginable()
     a.setImageFromNumpy(np.random.random((10,10,10)))
     b.setImageFromNumpy(np.random.random((10,10,10)))
+
+
+
     R=cmrOutput("TESS","/g/zzz.zip",'/g/aaa/')
+    # Create a session
+    # read aws credentials from a file
+    AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN = getAwsCredentials('/home/eros/.aws/credentials')
+
+    s3=getS3Resource(AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN)
     
+
     R.addAble(a,1,"test",basename="test.nii.gz")
     R.addAble(a,1,"test2",basename="test2.nii.gz")
     R.addAbleFromFilename("/g/SAR2.nii.gz",3,"test3")
@@ -263,7 +287,8 @@ if __name__ == "__main__":
     R.changeOutputPath("/g/aa2ea/")
     R.setEvent({"id":1})
     # R.exportAndZipResults(outzipfile='/g/zzz.zip',delete=False)
-    R.exportAndZipResults(delete=True)
+    # R.exportAndZipResults(delete=True)
+    R.exportAndZipResultsToS3(delete=True,s3=s3,bucket="mytestcmr")
 
 
 
