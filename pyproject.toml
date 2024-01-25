@@ -10,7 +10,7 @@ include = ["**/*.py"]
 
 [project]
 name = "cmrawspy"
-version = "0.0.13"
+version = "0.0.14"
 authors = [
   { name="Dr. Eros Montin, PhD", email="eros.montin@gmail.com" },
 ]
