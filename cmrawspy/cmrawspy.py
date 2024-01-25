@@ -68,7 +68,7 @@ def downloadFileFromS3(bucket_name,file_key,outfile=None, s3=None):
     if s3 == None:
         s3 = boto3.resource("s3")
     if outfile == None:
-        outfile = pn.createRandomTemporaryPathableFromFileName("a.json")
+        outfile = pn.createRandomTemporaryPathableFromFileName(file_key).getPosition()
     s3.Bucket(bucket_name).download_file(file_key, outfile)
     return outfile
 
@@ -259,12 +259,9 @@ class cmrOutput:
 if __name__ == "__main__":
 
 #dowbload file
-        J=pn.Pathable("data/s3job.json").readJson() 
-
+        J=pn.Pathable("data/s3job.json").readJson()
         T=J["task"]
-        
         OPT=T["options"]
-        
         MATLAB=J["output"]["matlab"]
         s3=getS3ResourceFromCredentials('/home/eros/.aws/credentials')
         md=getCMRFile(OPT["materialDensity"],s3=s3)
