@@ -247,7 +247,7 @@ class cmrOutput:
         print(f"{ self.outputpath.getPosition()} - {p} -{outzipfile}")
         ext=pn.Pathable(outzipfile).getExtension()
         print(ext)
-        fi=outzipfile.replace(ext,"")
+        fi=outzipfile.replace(f'.{ext}',"")
         print(fi,ext)
         shutil.make_archive(fi,ext , self.outputpath.getPosition())
         if delete:
