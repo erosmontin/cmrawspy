@@ -76,7 +76,8 @@ def uploadFiletoS3(filename,bucket_name,file_key=None, s3=None):
     if s3 == None:
         s3 = boto3.resource("s3")
     if file_key == None:
-        file_key = pn.Pathable(filename).addSuffix(f'-{str(uuid.uuid1())}').getBaseName()  
+        file_key = pn.Pathable(filename).addSuffix(f'-{str(uuid.uuid1())}').getBaseName()
+    
     s3.Bucket(bucket_name).upload_file(filename, file_key)
     return {"bucket": bucket_name, "key": file_key}
 
@@ -238,12 +239,17 @@ class cmrOutput:
         
         return self.outputpath.getPosition()
 
+
     def exportAndZipResults(self,outzipfile=None,delete=False):
         p=self.exportResults()
         if outzipfile==None:
             outzipfile=self.outputfilename.getPosition()
-        print(f"{ self.outputpath.getPosition()} - p -{outzipfile}")
-        shutil.make_archive(outzipfile[:-4],outzipfile[-3:] , self.outputpath.getPosition())
+        print(f"{ self.outputpath.getPosition()} - {p} -{outzipfile}")
+        ext=pn.Pathable(outzipfile).getExtension()
+        print(ext)
+        fi=outzipfile.replace(ext,"")
+        print(fi,ext)
+        shutil.make_archive(fi,ext , self.outputpath.getPosition())
         if delete:
             shutil.rmtree(self.outputpath.getPosition())
         return outzipfile
@@ -261,13 +267,13 @@ class cmrOutput:
 if __name__ == "__main__":
 
 #dowbload file
-        J=pn.Pathable("data/s3job.json").readJson()
-        T=J["task"]
-        OPT=T["options"]
-        MATLAB=J["output"]["matlab"]
-        s3=getS3ResourceFromCredentials('/home/eros/.aws/credentials')
-        md=getCMRFile(OPT["materialDensity"],s3=s3)
-        print(md)
+        # J=pn.Pathable("data/s3job.json").readJson()
+        # T=J["task"]
+        # OPT=T["options"]
+        # MATLAB=J["output"]["matlab"]
+        # s3=getS3ResourceFromCredentials('/home/eros/.aws/credentials')
+        # md=getCMRFile(OPT["materialDensity"],s3=s3)
+        # print(md)
 
 ## bucket and key
     # event=pn.readJson("data/event.json")
@@ -275,42 +281,43 @@ if __name__ == "__main__":
     # print(job_bucket, job_file_key)
 
 
-#OUPUT
-    # a=ima.Imaginable()
-    # b=ima.Imaginable()
-    # a.setImageFromNumpy(np.random.random((10,10,10)))
-    # b.setImageFromNumpy(np.random.random((10,10,10)))
+# OUPUT
+    a=ima.Imaginable()
+    b=ima.Imaginable()
+    a.setImageFromNumpy(np.random.random((10,10,10)))
+    b.setImageFromNumpy(np.random.random((10,10,10)))
 
 
 
-    # R=cmrOutput("TESS","/g/zzz.zip",'/g/aaa/')
-    # # Create a session
-    # # read aws credentials from a file
-    # AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN = getAwsCredentials('/home/eros/.aws/credentials')
+    R=cmrOutput("TESS","/g/zzz.zip",'/g/aaa/')
+    # Create a session
+    # read aws credentials from a file
+    AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN = getAwsCredentials('/home/eros/.aws/credentials')
 
-    # s3=getS3Resource(AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN)
+    s3=getS3Resource(AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_SESSION_TOKEN)
     
 
-    # R.addAble(a,1,"test",basename="test.nii.gz")
-    # R.addAble(a,1,"test2",basename="test2.nii.gz")
-    # R.addAbleFromFilename("/g/SAR2.nii.gz",3,"test3")
-    # R.setApp("TESS")
-    # R.setToken("dede")
-    # R.setPipeline("dedde")
-    # L=pn.Log()
-    # L.append("test")
-    # L.append("test2")
-    # R.setLog(L)
-    # R.changeOutputPath("/g/bbb/")
-    # R.setTask({"id":1,
-    # "name":"test"})
-    # R.setOptions({"id":1,'ded':'rrr'})
+    R.addAble(a,1,"test",basename="test.nii.gz")
+    R.addAble(a,1,"test2",basename="test2.nii.gz")
+    R.addAbleFromFilename("/g/SAR2.nii.gz",3,"test3")
+    R.setApp("TESS")
+    R.setToken("dede")
+    R.setPipeline("dedde")
+    L=pn.Log()
+    L.append("test")
+    L.append("test2")
+    R.setLog(L)
+    R.changeOutputPath("/g/bbb/")
+    R.setTask({"id":1,
+    "name":"test"})
+    R.setOptions({"id":1,'ded':'rrr'})
 
-    # R.changeOutputPath("/g/aa2ea/")
-    # R.setEvent({"id":1})
-    # # R.exportAndZipResults(outzipfile='/g/zzz.zip',delete=False)
-    # # R.exportAndZipResults(delete=True)
-    # R.exportAndZipResultsToS3(delete=True,s3=s3,bucket="mytestcmr")
+    R.changeOutputPath("/g/aa2ea/")
+    R.setEvent({"id":1})
+    # R.exportAndZipResults(outzipfile='/g/zzz.zip',delete=False)
+    # R.exportAndZipResults(delete=True)
+    o=R.exportAndZipResultsToS3(delete=True,s3=s3,bucket="mytestcmr")
+    print(o)
 
 
 
