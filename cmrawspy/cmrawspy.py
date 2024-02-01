@@ -168,6 +168,7 @@ class cmrOutput:
         if "options" not in self.out["headers"].keys():
             self.out["headers"]["options"]={}
         self.out["headers"]["options"]["pipeline"]=a
+        self.out["headers"]["options"]["pipelineid"]=a
 
     def setToken(self,a):
         if "options" not in self.out["headers"].keys():
